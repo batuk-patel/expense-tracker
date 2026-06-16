@@ -1,0 +1,40 @@
+// Test commands to use in your terminal or API client like Postman
+
+### Create a toll entry
+POST http://localhost:8080/api/toll-entries
+Content-Type: application/json
+
+{
+  "amount": 100.50,
+  "location": "Toll Gate A"
+}
+
+### Create another entry
+POST http://localhost:8080/api/toll-entries
+Content-Type: application/json
+
+{
+  "amount": 250.75,
+  "location": "Toll Gate B"
+}
+
+### Get all entries
+GET http://localhost:8080/api/toll-entries
+
+### Get entry by ID
+GET http://localhost:8080/api/toll-entries/1
+
+### Get entries by location
+GET http://localhost:8080/api/toll-entries/location/Toll%20Gate%20A
+
+### Update an entry
+PUT http://localhost:8080/api/toll-entries/1
+Content-Type: application/json
+
+{
+  "amount": 120.00,
+  "location": "Updated Gate A"
+}
+
+### Delete an entry
+DELETE http://localhost:8080/api/toll-entries/1
