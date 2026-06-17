@@ -2,11 +2,13 @@ package com.expensetracker.controller;
 
 import com.expensetracker.entity.AccommodationEntry;
 import com.expensetracker.service.AccommodationEntryService;
+import com.expensetracker.service.TripService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/accommodation-entries")
@@ -16,9 +18,31 @@ public class AccommodationEntryController {
     @Autowired
     private AccommodationEntryService accommodationEntryService;
 
+    @Autowired
+    private TripService tripService;
+
     @PostMapping
-    public ResponseEntity<AccommodationEntry> createAccommodationEntry(@RequestBody AccommodationEntry entry) {
-        return ResponseEntity.ok(accommodationEntryService.saveAccommodationEntry(entry));
+    public ResponseEntity<?> createAccommodationEntry(@RequestBody Map<String, Object> body) {
+        try {
+            AccommodationEntry entry = new AccommodationEntry();
+            entry.setAmount(((Number) body.get("amount")).doubleValue());
+            Object name = body.get("name");
+            entry.setName(name != null && !name.toString().isBlank() ? name.toString() : null);
+
+            Object tripObj = body.get("trip");
+            if (tripObj instanceof Map) {
+                Object tripId = ((Map<?, ?>) tripObj).get("id");
+                if (tripId != null) {
+                    Long id = ((Number) tripId).longValue();
+                    tripService.getTripById(id).ifPresent(entry::setTrip);
+                }
+            }
+
+            AccommodationEntry saved = accommodationEntryService.saveAccommodationEntry(entry);
+            return ResponseEntity.ok(saved);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error saving accommodation entry: " + e.getMessage());
+        }
     }
 
     @GetMapping
@@ -36,15 +60,6 @@ public class AccommodationEntryController {
     @GetMapping("/trip/{tripId}")
     public ResponseEntity<List<AccommodationEntry>> getAccommodationEntriesByTrip(@PathVariable Long tripId) {
         return ResponseEntity.ok(accommodationEntryService.getAccommodationEntriesByTrip(tripId));
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<AccommodationEntry> updateAccommodationEntry(@PathVariable Long id, @RequestBody AccommodationEntry updatedEntry) {
-        AccommodationEntry entry = accommodationEntryService.updateAccommodationEntry(id, updatedEntry);
-        if (entry != null) {
-            return ResponseEntity.ok(entry);
-        }
-        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")

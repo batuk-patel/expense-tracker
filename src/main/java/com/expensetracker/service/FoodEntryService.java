@@ -5,6 +5,7 @@ import com.expensetracker.repository.FoodEntryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,6 +16,9 @@ public class FoodEntryService {
     private FoodEntryRepository foodEntryRepository;
 
     public FoodEntry saveFoodEntry(FoodEntry entry) {
+        if (entry.getEntryTime() == null) {
+            entry.setEntryTime(LocalDateTime.now());
+        }
         return foodEntryRepository.save(entry);
     }
 

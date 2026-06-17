@@ -15,8 +15,10 @@ public class FuelEntryService {
     @Autowired
     private FuelEntryRepository fuelEntryRepository;
     
-    // Save a new fuel entry
     public FuelEntry saveFuelEntry(FuelEntry fuelEntry) {
+        if (fuelEntry.getEntryTime() == null) {
+            fuelEntry.setEntryTime(LocalDateTime.now());
+        }
         return fuelEntryRepository.save(fuelEntry);
     }
     

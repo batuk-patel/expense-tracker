@@ -64,7 +64,6 @@ let currentTheme = 'dark';
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    // Restore persistent theme and trip filter from localStorage
     const savedTheme = localStorage.getItem('themeMode');
     currentTheme = savedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     applyTheme(currentTheme);
@@ -73,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (savedFilter) {
         currentTripFilter = savedFilter;
     }
-    
+
     startClock();
     fetchData();
     setupEventListeners();
@@ -483,20 +482,16 @@ function setupEventListeners() {
 
             if (res.ok) {
                 const saved = await res.json();
-                tollEntries.unshift(saved); // Add to local state
+                tollEntries.unshift(saved);
                 updateUI();
                 tollForm.reset();
-                
-                // Restore form select default to filter value
-                if (currentTripFilter !== 'all' && currentTripFilter !== 'none') {
-                    tollTripSelect.value = currentTripFilter;
-                } else {
-                    tollTripSelect.value = 'none';
-                }
-                
+                // Restore trip selection to current filter
+                restoreFormTripSelects();
                 showToast('Toll expense recorded!');
             } else {
-                throw new Error('Save failed');
+                const errText = await res.text();
+                console.error('Server error saving toll:', errText);
+                showToast('Failed to save toll entry. Check console.', true);
             }
         } catch (err) {
             console.error('Error saving toll entry:', err);
@@ -533,16 +528,12 @@ function setupEventListeners() {
                 fuelEntries.unshift(saved);
                 updateUI();
                 fuelForm.reset();
-                
-                if (currentTripFilter !== 'all' && currentTripFilter !== 'none') {
-                    fuelTripSelect.value = currentTripFilter;
-                } else {
-                    fuelTripSelect.value = 'none';
-                }
-                
+                restoreFormTripSelects();
                 showToast('Fuel purchase recorded!');
             } else {
-                throw new Error('Save failed');
+                const errText = await res.text();
+                console.error('Server error saving fuel:', errText);
+                showToast('Failed to save fuel entry. Check console.', true);
             }
         } catch (err) {
             console.error('Error saving fuel entry:', err);
@@ -575,16 +566,12 @@ function setupEventListeners() {
                 accommodationEntries.unshift(saved);
                 updateUI();
                 accommodationForm.reset();
-
-                if (currentTripFilter !== 'all' && currentTripFilter !== 'none') {
-                    accommodationTripSelect.value = currentTripFilter;
-                } else {
-                    accommodationTripSelect.value = 'none';
-                }
-
+                restoreFormTripSelects();
                 showToast('Accommodation recorded!');
             } else {
-                throw new Error('Save failed');
+                const errText = await res.text();
+                console.error('Server error saving accommodation:', errText);
+                showToast('Failed to save accommodation. Check console.', true);
             }
         } catch (err) {
             console.error('Error saving accommodation entry:', err);
@@ -617,16 +604,12 @@ function setupEventListeners() {
                 foodEntries.unshift(saved);
                 updateUI();
                 foodForm.reset();
-
-                if (currentTripFilter !== 'all' && currentTripFilter !== 'none') {
-                    foodTripSelect.value = currentTripFilter;
-                } else {
-                    foodTripSelect.value = 'none';
-                }
-
+                restoreFormTripSelects();
                 showToast('Food expense recorded!');
             } else {
-                throw new Error('Save failed');
+                const errText = await res.text();
+                console.error('Server error saving food:', errText);
+                showToast('Failed to save food entry. Check console.', true);
             }
         } catch (err) {
             console.error('Error saving food entry:', err);
@@ -638,6 +621,21 @@ function setupEventListeners() {
         themeToggleBtn.addEventListener('click', () => {
             applyTheme(currentTheme === 'light' ? 'dark' : 'light');
         });
+    }
+}
+
+// Restore all trip selects in forms to match the current active filter
+function restoreFormTripSelects() {
+    if (currentTripFilter !== 'all' && currentTripFilter !== 'none') {
+        tollTripSelect.value = currentTripFilter;
+        fuelTripSelect.value = currentTripFilter;
+        accommodationTripSelect.value = currentTripFilter;
+        foodTripSelect.value = currentTripFilter;
+    } else {
+        tollTripSelect.value = 'none';
+        fuelTripSelect.value = 'none';
+        accommodationTripSelect.value = 'none';
+        foodTripSelect.value = 'none';
     }
 }
 
@@ -757,7 +755,8 @@ function showToast(message, isError = false) {
 }
 
 function escapeHTML(str) {
-    return str
+    if (str == null) return '';
+    return String(str)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')

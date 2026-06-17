@@ -11,46 +11,34 @@ import java.util.Optional;
 
 @Service
 public class TollEntryService {
-    
+
     @Autowired
     private TollEntryRepository tollEntryRepository;
-    
-    // Save a new toll entry
+
     public TollEntry saveTollEntry(TollEntry tollEntry) {
+        // Always ensure entryTime is set
+        if (tollEntry.getEntryTime() == null) {
+            tollEntry.setEntryTime(LocalDateTime.now());
+        }
         return tollEntryRepository.save(tollEntry);
     }
-    
-    // Get all toll entries
+
     public List<TollEntry> getAllTollEntries() {
         return tollEntryRepository.findAll();
     }
-    
-    // Get toll entry by ID
+
     public Optional<TollEntry> getTollEntryById(Long id) {
         return tollEntryRepository.findById(id);
     }
-    
-    // Get toll entries by location
-    public List<TollEntry> getTollEntriesByLocation(String location) {
-        return tollEntryRepository.findByLocation(location);
-    }
-    
-    // Get toll entries between two dates
-    public List<TollEntry> getTollEntriesByDateRange(LocalDateTime startTime, LocalDateTime endTime) {
-        return tollEntryRepository.findByEntryTimeBetween(startTime, endTime);
-    }
-    
-    // Get toll entries by trip ID
+
     public List<TollEntry> getTollEntriesByTrip(Long tripId) {
         return tollEntryRepository.findByTripId(tripId);
     }
-    
-    // Delete a toll entry
+
     public void deleteTollEntry(Long id) {
         tollEntryRepository.deleteById(id);
     }
-    
-    // Update a toll entry
+
     public TollEntry updateTollEntry(Long id, TollEntry updatedEntry) {
         return tollEntryRepository.findById(id).map(tollEntry -> {
             tollEntry.setAmount(updatedEntry.getAmount());

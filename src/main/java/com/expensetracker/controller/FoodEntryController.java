@@ -2,11 +2,13 @@ package com.expensetracker.controller;
 
 import com.expensetracker.entity.FoodEntry;
 import com.expensetracker.service.FoodEntryService;
+import com.expensetracker.service.TripService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/food-entries")
@@ -16,9 +18,31 @@ public class FoodEntryController {
     @Autowired
     private FoodEntryService foodEntryService;
 
+    @Autowired
+    private TripService tripService;
+
     @PostMapping
-    public ResponseEntity<FoodEntry> createFoodEntry(@RequestBody FoodEntry entry) {
-        return ResponseEntity.ok(foodEntryService.saveFoodEntry(entry));
+    public ResponseEntity<?> createFoodEntry(@RequestBody Map<String, Object> body) {
+        try {
+            FoodEntry entry = new FoodEntry();
+            entry.setAmount(((Number) body.get("amount")).doubleValue());
+            Object name = body.get("name");
+            entry.setName(name != null && !name.toString().isBlank() ? name.toString() : null);
+
+            Object tripObj = body.get("trip");
+            if (tripObj instanceof Map) {
+                Object tripId = ((Map<?, ?>) tripObj).get("id");
+                if (tripId != null) {
+                    Long id = ((Number) tripId).longValue();
+                    tripService.getTripById(id).ifPresent(entry::setTrip);
+                }
+            }
+
+            FoodEntry saved = foodEntryService.saveFoodEntry(entry);
+            return ResponseEntity.ok(saved);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error saving food entry: " + e.getMessage());
+        }
     }
 
     @GetMapping
@@ -36,15 +60,6 @@ public class FoodEntryController {
     @GetMapping("/trip/{tripId}")
     public ResponseEntity<List<FoodEntry>> getFoodEntriesByTrip(@PathVariable Long tripId) {
         return ResponseEntity.ok(foodEntryService.getFoodEntriesByTrip(tripId));
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<FoodEntry> updateFoodEntry(@PathVariable Long id, @RequestBody FoodEntry updatedEntry) {
-        FoodEntry entry = foodEntryService.updateFoodEntry(id, updatedEntry);
-        if (entry != null) {
-            return ResponseEntity.ok(entry);
-        }
-        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
