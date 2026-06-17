@@ -17,6 +17,10 @@
     --color-purple-glow: rgba(168, 85, 247, 0.15);
     --color-orange: #f97316;
     --color-orange-glow: rgba(249, 115, 22, 0.15);
+    --color-pink: #ec4899;
+    --color-pink-glow: rgba(236, 72, 153, 0.15);
+    --color-rose: #f43f5e;
+    --color-rose-glow: rgba(244, 63, 94, 0.15);
     --color-danger: #ef4444;
     
     --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -41,6 +45,10 @@
     --color-purple-glow: rgba(124, 58, 237, 0.16);
     --color-orange: #ea580c;
     --color-orange-glow: rgba(251, 146, 60, 0.16);
+    --color-pink: #db2777;
+    --color-pink-glow: rgba(236, 72, 153, 0.16);
+    --color-rose: #e11d48;
+    --color-rose-glow: rgba(244, 63, 94, 0.16);
     --color-danger: #b91c1c;
 }
 
@@ -340,6 +348,8 @@ body {
 #kpi-toll-spend::before { background: var(--color-blue); }
 #kpi-fuel-spend::before { background: var(--color-green); }
 #kpi-fuel-volume::before { background: var(--color-orange); }
+#kpi-accommodation-spend::before { background: var(--color-pink); }
+#kpi-food-spend::before { background: var(--color-rose); }
 
 .kpi-content {
     display: flex;
@@ -396,6 +406,16 @@ body {
 .circle-orange {
     background: var(--color-orange-glow);
     color: var(--color-orange);
+}
+
+.circle-pink {
+    background: var(--color-pink-glow);
+    color: var(--color-pink);
+}
+
+.circle-rose {
+    background: var(--color-rose-glow);
+    color: var(--color-rose);
 }
 
 .kpi-card:hover .kpi-icon-wrapper {
@@ -561,6 +581,26 @@ body {
     filter: brightness(1.08);
 }
 
+.btn-pink {
+    background: linear-gradient(135deg, var(--color-pink), #be185d);
+    box-shadow: 0 4px 14px rgba(236, 72, 153, 0.3);
+}
+
+.btn-pink:hover {
+    box-shadow: 0 6px 20px rgba(236, 72, 153, 0.45);
+    filter: brightness(1.08);
+}
+
+.btn-rose {
+    background: linear-gradient(135deg, var(--color-rose), #e11d48);
+    box-shadow: 0 4px 14px rgba(244, 63, 94, 0.3);
+}
+
+.btn-rose:hover {
+    box-shadow: 0 6px 20px rgba(244, 63, 94, 0.45);
+    filter: brightness(1.08);
+}
+
 /* Logs and History Section */
 .logs-card {
     background: var(--card-bg);
@@ -602,6 +642,18 @@ body {
     background: var(--color-green-glow);
     color: var(--color-green);
     border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-pink {
+    background: var(--color-pink-glow);
+    color: var(--color-pink);
+    border: 1px solid rgba(236, 72, 153, 0.3);
+}
+
+.badge-rose {
+    background: var(--color-rose-glow);
+    color: var(--color-rose);
+    border: 1px solid rgba(244, 63, 94, 0.3);
 }
 
 .logs-list-wrapper {

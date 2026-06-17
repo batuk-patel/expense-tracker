@@ -147,6 +147,34 @@
                     </svg>
                 </div>
             </div>
+
+            <!-- Card 5: Accommodation Spend -->
+            <div class="kpi-card" id="kpi-accommodation-spend">
+                <div class="kpi-content">
+                    <span class="kpi-label">Accommodation Expense</span>
+                    <span class="kpi-value" id="val-total-accommodation">₹0.00</span>
+                    <span class="kpi-meta" id="val-accommodation-count">0 entries</span>
+                </div>
+                <div class="kpi-icon-wrapper circle-pink">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V9l7-4 7 4v12M9 21v-6h6v6" />
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Card 6: Food Spend -->
+            <div class="kpi-card" id="kpi-food-spend">
+                <div class="kpi-content">
+                    <span class="kpi-label">Food Expense</span>
+                    <span class="kpi-value" id="val-total-food">₹0.00</span>
+                    <span class="kpi-meta" id="val-food-count">0 entries</span>
+                </div>
+                <div class="kpi-icon-wrapper circle-rose">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c.5 3.5 1.5 5.5 4.5 7.5C18 12 18.5 14 18.5 16c0 3.2-2.3 5.5-5.5 5.5S7.5 19.2 7.5 16c0-2 0.5-4 1.5-5.5C10.5 8.5 11.5 6.5 12 3z" />
+                    </svg>
+                </div>
+            </div>
         </section>
 
         <!-- Main Layout Split -->
@@ -239,6 +267,74 @@
                         </button>
                     </form>
                 </section>
+
+                <!-- Accommodation Entry Card -->
+                <section class="action-card" id="card-accommodation-form">
+                    <h2 class="card-title">
+                        <span class="icon-span color-pink">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V9l7-4 7 4v12M9 21v-6h6v6" /></svg>
+                        </span>
+                        Log Accommodation
+                    </h2>
+                    <form id="accommodation-form" class="form-container">
+                        <div class="form-group-row">
+                            <div class="form-group">
+                                <label for="accommodation-amount">Amount (₹)</label>
+                                <input type="number" id="accommodation-amount" placeholder="e.g. 3200" step="0.01" required min="1">
+                            </div>
+                            <div class="form-group">
+                                <label for="accommodation-name">Hotel / Place (Optional)</label>
+                                <input type="text" id="accommodation-name" placeholder="e.g. Hotel Green Stay">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="accommodation-trip">Link to Trip</label>
+                            <div class="select-wrapper">
+                                <select id="accommodation-trip">
+                                    <option value="none">General / No Trip</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-pink" id="btn-submit-accommodation">
+                            <span>Save Accommodation</span>
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+                        </button>
+                    </form>
+                </section>
+
+                <!-- Food Entry Card -->
+                <section class="action-card" id="card-food-form">
+                    <h2 class="card-title">
+                        <span class="icon-span color-rose">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3c.5 3.5 1.5 5.5 4.5 7.5C18 12 18.5 14 18.5 16c0 3.2-2.3 5.5-5.5 5.5S7.5 19.2 7.5 16c0-2 0.5-4 1.5-5.5C10.5 8.5 11.5 6.5 12 3z" /></svg>
+                        </span>
+                        Log Food Expense
+                    </h2>
+                    <form id="food-form" class="form-container">
+                        <div class="form-group-row">
+                            <div class="form-group">
+                                <label for="food-amount">Amount (₹)</label>
+                                <input type="number" id="food-amount" placeholder="e.g. 450" step="0.01" required min="1">
+                            </div>
+                            <div class="form-group">
+                                <label for="food-name">Restaurant / Dish (Optional)</label>
+                                <input type="text" id="food-name" placeholder="e.g. Café 17, Pizza">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="food-trip">Link to Trip</label>
+                            <div class="select-wrapper">
+                                <select id="food-trip">
+                                    <option value="none">General / No Trip</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-rose" id="btn-submit-food">
+                            <span>Save Food Entry</span>
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+                        </button>
+                    </form>
+                </section>
             </div>
 
             <!-- RIGHT COLUMN: Logs/Feeds -->
@@ -269,6 +365,34 @@
                         <div class="empty-state">
                             <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" class="empty-icon"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                             <p>No fuel purchases logged yet.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Accommodation Logs -->
+                <section class="logs-card" id="card-accommodation-logs">
+                    <div class="logs-header">
+                        <h2 class="card-title">Accommodation History</h2>
+                        <span class="badge badge-pink" id="badge-accommodation-count">0 entries</span>
+                    </div>
+                    <div class="logs-list-wrapper" id="accommodation-logs-list">
+                        <div class="empty-state">
+                            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" class="empty-icon"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            <p>No accommodation entries logged yet.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Food Logs -->
+                <section class="logs-card" id="card-food-logs">
+                    <div class="logs-header">
+                        <h2 class="card-title">Food Expense History</h2>
+                        <span class="badge badge-rose" id="badge-food-count">0 entries</span>
+                    </div>
+                    <div class="logs-list-wrapper" id="food-logs-list">
+                        <div class="empty-state">
+                            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" class="empty-icon"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            <p>No food expenses logged yet.</p>
                         </div>
                     </div>
                 </section>
