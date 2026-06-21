@@ -5,7 +5,7 @@ import com.expensetracker.repository.TollEntryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import com.expensetracker.util.DateTimeUtil;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,7 +18,7 @@ public class TollEntryService {
     public TollEntry saveTollEntry(TollEntry tollEntry) {
         // Always ensure entryTime is set
         if (tollEntry.getEntryTime() == null) {
-            tollEntry.setEntryTime(LocalDateTime.now());
+            tollEntry.setEntryTime(DateTimeUtil.now());
         }
         return tollEntryRepository.save(tollEntry);
     }

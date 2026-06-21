@@ -5,14 +5,19 @@ const FUEL_API = `${API_BASE}/fuel-entries`;
 const ACCOMMODATION_API = `${API_BASE}/accommodation-entries`;
 const FOOD_API = `${API_BASE}/food-entries`;
 const TRIP_API = `${API_BASE}/trips`;
+const CUSTOM_EXPENSE_API = `${API_BASE}/custom-expense-entries`;
 
 // State
 let tollEntries = [];
 let fuelEntries = [];
 let accommodationEntries = [];
 let foodEntries = [];
+let customExpenseEntries = [];
 let trips = [];
+let tripCustomFields = [];
 let currentTripFilter = 'all';
+
+const APP_TIMEZONE = 'Asia/Kolkata';
 
 // DOM Elements
 const timeEl = document.getElementById('live-time');
@@ -60,6 +65,24 @@ const cancelTripBtn = document.getElementById('btn-cancel-trip');
 const themeToggleBtn = document.getElementById('btn-toggle-theme');
 const themeModeLabel = document.getElementById('theme-mode-label');
 
+const btnToggleRenameTrip = document.getElementById('btn-toggle-rename-trip');
+const renameTripPanel = document.getElementById('panel-rename-trip');
+const renameTripForm = document.getElementById('rename-trip-form');
+const cancelRenameTripBtn = document.getElementById('btn-cancel-rename-trip');
+const customFieldsPanel = document.getElementById('panel-custom-fields');
+const customFieldsTripNameEl = document.getElementById('custom-fields-trip-name');
+const customFieldForm = document.getElementById('custom-field-form');
+const customFieldsList = document.getElementById('custom-fields-list');
+const cardCustomExpenseForm = document.getElementById('card-custom-expense-form');
+const cardCustomExpenseLogs = document.getElementById('card-custom-expense-logs');
+const customExpenseForm = document.getElementById('custom-expense-form');
+const customExpenseFieldSelect = document.getElementById('custom-expense-field');
+const customExpenseAmountGroup = document.getElementById('custom-expense-amount-group');
+const customExpenseTextGroup = document.getElementById('custom-expense-text-group');
+const customExpenseNumberGroup = document.getElementById('custom-expense-number-group');
+const customLogsList = document.getElementById('custom-logs-list');
+const badgeCustomCountEl = document.getElementById('badge-custom-count');
+
 let currentTheme = 'dark';
 
 // Initialize
@@ -82,15 +105,20 @@ document.addEventListener('DOMContentLoaded', () => {
 function startClock() {
     const updateTime = () => {
         const now = new Date();
-        timeEl.textContent = now.toLocaleTimeString('en-US', { hour12: true });
-        dateEl.textContent = now.toLocaleDateString('en-US', { 
-            weekday: 'long', 
-            month: 'short', 
-            day: 'numeric' 
+        timeEl.textContent = now.toLocaleTimeString('en-IN', { hour12: true, timeZone: APP_TIMEZONE });
+        dateEl.textContent = now.toLocaleDateString('en-IN', {
+            weekday: 'long',
+            month: 'short',
+            day: 'numeric',
+            timeZone: APP_TIMEZONE
         });
     };
     updateTime();
     setInterval(updateTime, 1000);
+}
+
+function currentEntryTime() {
+    return new Date().toISOString();
 }
 
 function applyTheme(theme) {
@@ -104,12 +132,13 @@ function applyTheme(theme) {
 // Fetch All Data
 async function fetchData() {
     try {
-        const [tollRes, fuelRes, accommodationRes, foodRes, tripRes] = await Promise.all([
+        const [tollRes, fuelRes, accommodationRes, foodRes, tripRes, customRes] = await Promise.all([
             fetch(TOLL_API),
             fetch(FUEL_API),
             fetch(ACCOMMODATION_API),
             fetch(FOOD_API),
-            fetch(TRIP_API)
+            fetch(TRIP_API),
+            fetch(CUSTOM_EXPENSE_API)
         ]);
 
         if (tollRes.ok) tollEntries = await tollRes.json();
@@ -117,13 +146,125 @@ async function fetchData() {
         if (accommodationRes.ok) accommodationEntries = await accommodationRes.json();
         if (foodRes.ok) foodEntries = await foodRes.json();
         if (tripRes.ok) trips = await tripRes.json();
+        if (customRes.ok) customExpenseEntries = await customRes.json();
 
         updateTripDropdowns();
+        await updateTripSpecificPanels();
         updateUI();
     } catch (err) {
         console.error('Error fetching data:', err);
         showToast('Could not load entries from server.', true);
     }
+}
+
+function getSelectedTripId() {
+    if (currentTripFilter === 'all' || currentTripFilter === 'none') return null;
+    return parseInt(currentTripFilter, 10);
+}
+
+function propagateTripName(tripId, newName, newDescription) {
+    const updateTripRef = (entry) => {
+        if (entry.trip && entry.trip.id === tripId) {
+            entry.trip.name = newName;
+            if (newDescription !== undefined) {
+                entry.trip.description = newDescription;
+            }
+        }
+    };
+    tollEntries.forEach(updateTripRef);
+    fuelEntries.forEach(updateTripRef);
+    accommodationEntries.forEach(updateTripRef);
+    foodEntries.forEach(updateTripRef);
+    customExpenseEntries.forEach(updateTripRef);
+}
+
+async function fetchCustomFieldsForTrip(tripId) {
+    if (!tripId) {
+        tripCustomFields = [];
+        return;
+    }
+    try {
+        const res = await fetch(`${TRIP_API}/${tripId}/custom-fields`);
+        if (res.ok) {
+            tripCustomFields = await res.json();
+        } else {
+            tripCustomFields = [];
+        }
+    } catch (err) {
+        console.error('Error fetching custom fields:', err);
+        tripCustomFields = [];
+    }
+}
+
+async function updateTripSpecificPanels() {
+    const tripId = getSelectedTripId();
+    const hasTrip = tripId !== null;
+
+    btnToggleRenameTrip.classList.toggle('hidden', !hasTrip);
+    customFieldsPanel.classList.toggle('hidden', !hasTrip);
+    cardCustomExpenseForm.classList.toggle('hidden', !hasTrip);
+    cardCustomExpenseLogs.classList.toggle('hidden', !hasTrip);
+
+    if (!hasTrip) {
+        renameTripPanel.classList.add('hidden');
+        tripCustomFields = [];
+        renderCustomFieldsList();
+        updateCustomExpenseFieldSelect();
+        return;
+    }
+
+    const trip = trips.find(t => t.id === tripId);
+    if (trip) {
+        customFieldsTripNameEl.textContent = trip.name;
+    }
+
+    await fetchCustomFieldsForTrip(tripId);
+    renderCustomFieldsList();
+    updateCustomExpenseFieldSelect();
+}
+
+function renderCustomFieldsList() {
+    if (tripCustomFields.length === 0) {
+        customFieldsList.innerHTML = '<p class="panel-hint">No custom fields yet. Add one above.</p>';
+        return;
+    }
+
+    customFieldsList.innerHTML = tripCustomFields.map(field => `
+        <div class="custom-field-item" data-id="${field.id}">
+            <div>
+                <strong>${escapeHTML(field.name)}</strong>
+                <span class="badge badge-orange">${field.fieldType}</span>
+            </div>
+            <button type="button" class="btn-delete" aria-label="Delete field" onclick="deleteCustomField(${field.id})">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+            </button>
+        </div>
+    `).join('');
+}
+
+function updateCustomExpenseFieldSelect() {
+    customExpenseFieldSelect.innerHTML = '<option value="">Select a field...</option>';
+    tripCustomFields.forEach(field => {
+        const opt = document.createElement('option');
+        opt.value = field.id;
+        opt.textContent = `${field.name} (${field.fieldType})`;
+        opt.dataset.fieldType = field.fieldType;
+        customExpenseFieldSelect.appendChild(opt);
+    });
+    updateCustomExpenseInputVisibility();
+}
+
+function updateCustomExpenseInputVisibility() {
+    const selected = customExpenseFieldSelect.selectedOptions[0];
+    const fieldType = selected ? selected.dataset.fieldType : null;
+
+    customExpenseAmountGroup.classList.toggle('hidden', fieldType !== 'AMOUNT');
+    customExpenseTextGroup.classList.toggle('hidden', fieldType !== 'TEXT');
+    customExpenseNumberGroup.classList.toggle('hidden', fieldType !== 'NUMBER');
+
+    document.getElementById('custom-expense-amount').required = fieldType === 'AMOUNT';
+    document.getElementById('custom-expense-text').required = fieldType === 'TEXT';
+    document.getElementById('custom-expense-number').required = fieldType === 'NUMBER';
 }
 
 // Update all Trip drop-down selectors
@@ -196,31 +337,38 @@ function updateUI() {
     let filteredFuels = [...fuelEntries];
     let filteredAccommodation = [...accommodationEntries];
     let filteredFood = [...foodEntries];
+    let filteredCustom = [...customExpenseEntries];
 
     if (currentTripFilter === 'none') {
         filteredTolls = tollEntries.filter(item => !item.trip);
         filteredFuels = fuelEntries.filter(item => !item.trip);
         filteredAccommodation = accommodationEntries.filter(item => !item.trip);
         filteredFood = foodEntries.filter(item => !item.trip);
+        filteredCustom = [];
     } else if (currentTripFilter !== 'all') {
         const tripId = parseInt(currentTripFilter);
         filteredTolls = tollEntries.filter(item => item.trip && item.trip.id === tripId);
         filteredFuels = fuelEntries.filter(item => item.trip && item.trip.id === tripId);
         filteredAccommodation = accommodationEntries.filter(item => item.trip && item.trip.id === tripId);
         filteredFood = foodEntries.filter(item => item.trip && item.trip.id === tripId);
+        filteredCustom = customExpenseEntries.filter(item => item.trip && item.trip.id === tripId);
     }
 
     filteredTolls.sort((a, b) => new Date(b.entryTime) - new Date(a.entryTime));
     filteredFuels.sort((a, b) => new Date(b.entryTime) - new Date(a.entryTime));
     filteredAccommodation.sort((a, b) => new Date(b.entryTime) - new Date(a.entryTime));
     filteredFood.sort((a, b) => new Date(b.entryTime) - new Date(a.entryTime));
+    filteredCustom.sort((a, b) => new Date(b.entryTime) - new Date(a.entryTime));
 
     const totalToll = filteredTolls.reduce((sum, item) => sum + item.amount, 0);
     const totalFuel = filteredFuels.reduce((sum, item) => sum + item.amount, 0);
     const totalAccommodation = filteredAccommodation.reduce((sum, item) => sum + item.amount, 0);
     const totalFood = filteredFood.reduce((sum, item) => sum + item.amount, 0);
+    const totalCustom = filteredCustom
+        .filter(item => item.customField && item.customField.fieldType === 'AMOUNT' && item.amount != null)
+        .reduce((sum, item) => sum + item.amount, 0);
     const totalLiters = filteredFuels.reduce((sum, item) => sum + item.liters, 0);
-    const combinedTotal = totalToll + totalFuel + totalAccommodation + totalFood;
+    const combinedTotal = totalToll + totalFuel + totalAccommodation + totalFood + totalCustom;
 
     totalCombinedEl.textContent = formatCurrency(combinedTotal);
     totalTollEl.textContent = formatCurrency(totalToll);
@@ -243,7 +391,10 @@ function updateUI() {
         const fuelPct = ((totalFuel / combinedTotal) * 100).toFixed(0);
         const accommodationPct = ((totalAccommodation / combinedTotal) * 100).toFixed(0);
         const foodPct = ((totalFood / combinedTotal) * 100).toFixed(0);
-        combinedMetaEl.textContent = `Toll (${tollPct}%) • Fuel (${fuelPct}%) • Stay (${accommodationPct}%) • Food (${foodPct}%)`;
+        const customPct = totalCustom > 0 ? ((totalCustom / combinedTotal) * 100).toFixed(0) : null;
+        let meta = `Toll (${tollPct}%) • Fuel (${fuelPct}%) • Stay (${accommodationPct}%) • Food (${foodPct}%)`;
+        if (customPct) meta += ` • Custom (${customPct}%)`;
+        combinedMetaEl.textContent = meta;
     } else {
         combinedMetaEl.textContent = 'No expenses logged';
     }
@@ -252,6 +403,8 @@ function updateUI() {
     renderFuelLogs(filteredFuels);
     renderAccommodationLogs(filteredAccommodation);
     renderFoodLogs(filteredFood);
+    renderCustomLogs(filteredCustom);
+    badgeCustomCountEl.textContent = `${filteredCustom.length} entries`;
 }
 
 // Render Toll Logs
@@ -376,10 +529,54 @@ function renderFoodLogs(entries) {
     `).join('');
 }
 
+function formatCustomValue(entry) {
+    if (!entry.customField) return '';
+    if (entry.customField.fieldType === 'AMOUNT' && entry.amount != null) {
+        return `₹${entry.amount.toFixed(2)}`;
+    }
+    if (entry.customField.fieldType === 'NUMBER' && entry.numberValue != null) {
+        return entry.numberValue.toString();
+    }
+    if (entry.customField.fieldType === 'TEXT' && entry.textValue) {
+        return entry.textValue;
+    }
+    return '—';
+}
+
+function renderCustomLogs(entries) {
+    if (entries.length === 0) {
+        customLogsList.innerHTML = `
+            <div class="empty-state">
+                <p>No custom entries logged yet.</p>
+            </div>`;
+        return;
+    }
+
+    customLogsList.innerHTML = entries.map(entry => `
+        <div class="log-item custom-item" data-id="${entry.id}">
+            <div class="log-details">
+                <div class="log-title-row">
+                    <span class="log-location">${escapeHTML(entry.customField ? entry.customField.name : 'Custom')}</span>
+                    ${entry.trip ? `<span class="badge-trip-link">${escapeHTML(entry.trip.name)}</span>` : ''}
+                </div>
+                <div class="log-note">${escapeHTML(formatCustomValue(entry))}</div>
+                ${entry.note ? `<div class="log-note">${escapeHTML(entry.note)}</div>` : ''}
+                <span class="log-time">${formatDateTime(entry.entryTime)}</span>
+            </div>
+            <div class="log-action-side">
+                ${entry.amount != null ? `<span class="log-amount">₹${entry.amount.toFixed(2)}</span>` : ''}
+                <button class="btn-delete" aria-label="Delete entry" onclick="deleteCustomExpense(${entry.id})">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
 // Event Listeners for Forms and Toolbar
 function setupEventListeners() {
     // Trip Filter Dropdown Change
-    tripFilterSelect.addEventListener('change', (e) => {
+    tripFilterSelect.addEventListener('change', async (e) => {
         currentTripFilter = e.target.value;
         localStorage.setItem('currentTripFilter', currentTripFilter);
         
@@ -394,6 +591,7 @@ function setupEventListeners() {
             accommodationTripSelect.value = 'none';
             foodTripSelect.value = 'none';
         }
+        await updateTripSpecificPanels();
         updateUI();
     });
 
@@ -410,6 +608,140 @@ function setupEventListeners() {
         tripForm.reset();
     });
 
+    btnToggleRenameTrip.addEventListener('click', () => {
+        const tripId = getSelectedTripId();
+        if (!tripId) return;
+        const trip = trips.find(t => t.id === tripId);
+        if (!trip) return;
+        document.getElementById('rename-trip-name').value = trip.name;
+        document.getElementById('rename-trip-desc').value = trip.description || '';
+        renameTripPanel.classList.remove('hidden');
+        tripPanel.classList.add('hidden');
+    });
+
+    cancelRenameTripBtn.addEventListener('click', () => {
+        renameTripPanel.classList.add('hidden');
+        renameTripForm.reset();
+    });
+
+    renameTripForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const tripId = getSelectedTripId();
+        if (!tripId) return;
+
+        const payload = {
+            name: document.getElementById('rename-trip-name').value.trim(),
+            description: document.getElementById('rename-trip-desc').value.trim() || null
+        };
+
+        try {
+            const res = await fetch(`${TRIP_API}/${tripId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                const updated = await res.json();
+                const idx = trips.findIndex(t => t.id === tripId);
+                if (idx !== -1) trips[idx] = updated;
+                propagateTripName(tripId, updated.name, updated.description);
+                updateTripDropdowns();
+                await updateTripSpecificPanels();
+                renameTripPanel.classList.add('hidden');
+                renameTripForm.reset();
+                updateUI();
+                showToast('Trip updated!');
+            } else {
+                throw new Error('Rename failed');
+            }
+        } catch (err) {
+            console.error('Error renaming trip:', err);
+            showToast('Failed to rename trip.', true);
+        }
+    });
+
+    customFieldForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const tripId = getSelectedTripId();
+        if (!tripId) return;
+
+        const payload = {
+            name: document.getElementById('custom-field-name').value.trim(),
+            fieldType: document.getElementById('custom-field-type').value
+        };
+
+        try {
+            const res = await fetch(`${TRIP_API}/${tripId}/custom-fields`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                customFieldForm.reset();
+                await fetchCustomFieldsForTrip(tripId);
+                renderCustomFieldsList();
+                updateCustomExpenseFieldSelect();
+                showToast('Custom field added!');
+            } else {
+                throw new Error('Add field failed');
+            }
+        } catch (err) {
+            console.error('Error adding custom field:', err);
+            showToast('Failed to add custom field.', true);
+        }
+    });
+
+    customExpenseFieldSelect.addEventListener('change', updateCustomExpenseInputVisibility);
+
+    customExpenseForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const tripId = getSelectedTripId();
+        const fieldId = parseInt(customExpenseFieldSelect.value, 10);
+        if (!tripId || !fieldId) return;
+
+        const selected = customExpenseFieldSelect.selectedOptions[0];
+        const fieldType = selected.dataset.fieldType;
+
+        const payload = {
+            tripId,
+            customFieldId: fieldId,
+            entryTime: currentEntryTime(),
+            note: document.getElementById('custom-expense-note').value.trim() || null
+        };
+
+        if (fieldType === 'AMOUNT') {
+            payload.amount = parseFloat(document.getElementById('custom-expense-amount').value);
+        } else if (fieldType === 'TEXT') {
+            payload.textValue = document.getElementById('custom-expense-text').value.trim();
+        } else if (fieldType === 'NUMBER') {
+            payload.numberValue = parseFloat(document.getElementById('custom-expense-number').value);
+        }
+
+        try {
+            const res = await fetch(CUSTOM_EXPENSE_API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                const saved = await res.json();
+                customExpenseEntries.unshift(saved);
+                customExpenseForm.reset();
+                updateCustomExpenseFieldSelect();
+                updateUI();
+                showToast('Custom entry saved!');
+            } else {
+                const errText = await res.text();
+                console.error('Server error saving custom entry:', errText);
+                showToast('Failed to save custom entry.', true);
+            }
+        } catch (err) {
+            console.error('Error saving custom entry:', err);
+            showToast('Failed to save custom entry.', true);
+        }
+    });
+
     // Save New Trip Submit
     tripForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -418,7 +750,8 @@ function setupEventListeners() {
 
         const payload = {
             name: tripNameInput.value.trim(),
-            description: tripDescInput.value.trim() || null
+            description: tripDescInput.value.trim() || null,
+            startDate: currentEntryTime()
         };
 
         try {
@@ -445,6 +778,7 @@ function setupEventListeners() {
 
                 tripForm.reset();
                 tripPanel.classList.add('hidden');
+                await updateTripSpecificPanels();
                 updateUI();
                 showToast('New trip created!');
             } else {
@@ -470,6 +804,7 @@ function setupEventListeners() {
             location: locationInput.value.trim(),
             tollType: tollTypeInput ? tollTypeInput.value : 'National',
             note: noteInput.value.trim() || null,
+            entryTime: currentEntryTime(),
             trip: tripVal === 'none' ? null : { id: parseInt(tripVal) }
         };
 
@@ -513,6 +848,7 @@ function setupEventListeners() {
             location: locationInput.value.trim(),
             liters: parseFloat(litersInput.value),
             note: noteInput.value.trim() || null,
+            entryTime: currentEntryTime(),
             trip: tripVal === 'none' ? null : { id: parseInt(tripVal) }
         };
 
@@ -551,6 +887,7 @@ function setupEventListeners() {
         const payload = {
             amount: parseFloat(amountInput.value),
             name: nameInput.value.trim() || null,
+            entryTime: currentEntryTime(),
             trip: tripVal === 'none' ? null : { id: parseInt(tripVal) }
         };
 
@@ -589,6 +926,7 @@ function setupEventListeners() {
         const payload = {
             amount: parseFloat(amountInput.value),
             name: nameInput.value.trim() || null,
+            entryTime: currentEntryTime(),
             trip: tripVal === 'none' ? null : { id: parseInt(tripVal) }
         };
 
@@ -725,6 +1063,46 @@ async function deleteFood(id) {
     }
 }
 
+async function deleteCustomField(fieldId) {
+    const tripId = getSelectedTripId();
+    if (!tripId || !confirm('Delete this custom field and all its entries?')) return;
+
+    try {
+        const res = await fetch(`${TRIP_API}/${tripId}/custom-fields/${fieldId}`, { method: 'DELETE' });
+        if (res.ok) {
+            tripCustomFields = tripCustomFields.filter(f => f.id !== fieldId);
+            customExpenseEntries = customExpenseEntries.filter(e => !e.customField || e.customField.id !== fieldId);
+            renderCustomFieldsList();
+            updateCustomExpenseFieldSelect();
+            updateUI();
+            showToast('Custom field deleted.');
+        } else {
+            throw new Error('Delete failed');
+        }
+    } catch (err) {
+        console.error('Error deleting custom field:', err);
+        showToast('Failed to delete custom field.', true);
+    }
+}
+
+async function deleteCustomExpense(id) {
+    if (!confirm('Are you sure you want to delete this custom entry?')) return;
+
+    try {
+        const res = await fetch(`${CUSTOM_EXPENSE_API}/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            customExpenseEntries = customExpenseEntries.filter(item => item.id !== id);
+            updateUI();
+            showToast('Custom entry deleted.');
+        } else {
+            throw new Error('Delete failed');
+        }
+    } catch (err) {
+        console.error('Error deleting custom entry:', err);
+        showToast('Failed to delete entry.', true);
+    }
+}
+
 // Helpers
 function formatCurrency(val) {
     return new Intl.NumberFormat('en-IN', {
@@ -735,9 +1113,19 @@ function formatCurrency(val) {
 }
 
 function formatDateTime(dateStr) {
-    const d = new Date(dateStr);
-    const datePart = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    const timePart = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    if (!dateStr) return '';
+    let normalized = dateStr;
+    if (dateStr.includes('T') && !dateStr.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(dateStr)) {
+        normalized = `${dateStr}+05:30`;
+    }
+    const d = new Date(normalized);
+    if (Number.isNaN(d.getTime())) return dateStr;
+    const datePart = d.toLocaleDateString('en-IN', {
+        month: 'short', day: 'numeric', year: 'numeric', timeZone: APP_TIMEZONE
+    });
+    const timePart = d.toLocaleTimeString('en-IN', {
+        hour: '2-digit', minute: '2-digit', hour12: true, timeZone: APP_TIMEZONE
+    });
     return `${datePart} • ${timePart}`;
 }
 

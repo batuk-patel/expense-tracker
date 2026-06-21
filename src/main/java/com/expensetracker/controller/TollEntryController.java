@@ -1,9 +1,10 @@
 package com.expensetracker.controller;
 
 import com.expensetracker.entity.TollEntry;
-import com.expensetracker.entity.Trip;
 import com.expensetracker.service.TollEntryService;
 import com.expensetracker.service.TripService;
+import com.expensetracker.util.DateTimeUtil;
+import com.expensetracker.util.RequestUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,15 +32,11 @@ public class TollEntryController {
             entry.setTollType(body.getOrDefault("tollType", "National").toString());
             Object note = body.get("note");
             entry.setNote(note != null && !note.toString().isBlank() ? note.toString() : null);
+            entry.setEntryTime(DateTimeUtil.parse(body.get("entryTime")));
 
-            // Resolve trip from DB to avoid detached entity issues
-            Object tripObj = body.get("trip");
-            if (tripObj instanceof Map) {
-                Object tripId = ((Map<?, ?>) tripObj).get("id");
-                if (tripId != null) {
-                    Long id = ((Number) tripId).longValue();
-                    tripService.getTripById(id).ifPresent(entry::setTrip);
-                }
+            Long tripId = RequestUtil.extractTripId(body);
+            if (tripId != null) {
+                tripService.getTripById(tripId).ifPresent(entry::setTrip);
             }
 
             TollEntry saved = tollEntryService.saveTollEntry(entry);

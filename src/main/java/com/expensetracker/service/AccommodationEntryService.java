@@ -5,7 +5,7 @@ import com.expensetracker.repository.AccommodationEntryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import com.expensetracker.util.DateTimeUtil;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,7 +17,7 @@ public class AccommodationEntryService {
 
     public AccommodationEntry saveAccommodationEntry(AccommodationEntry entry) {
         if (entry.getEntryTime() == null) {
-            entry.setEntryTime(LocalDateTime.now());
+            entry.setEntryTime(DateTimeUtil.now());
         }
         return accommodationEntryRepository.save(entry);
     }

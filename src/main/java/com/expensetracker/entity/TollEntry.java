@@ -1,5 +1,6 @@
 package com.expensetracker.entity;
 
+import com.expensetracker.util.DateTimeUtil;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -32,7 +33,7 @@ public class TollEntry {
     
     // Constructors
     public TollEntry() {
-        this.entryTime = LocalDateTime.now();
+        this.entryTime = DateTimeUtil.now();
     }
     
     public TollEntry(Double amount, String location, String tollType, String note, Trip trip) {
@@ -41,7 +42,7 @@ public class TollEntry {
         this.tollType = tollType;
         this.note = note;
         this.trip = trip;
-        this.entryTime = LocalDateTime.now();
+        this.entryTime = DateTimeUtil.now();
     }
     
     // Getters and Setters

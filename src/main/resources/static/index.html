@@ -58,7 +58,66 @@
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                     <span>Add Trip</span>
                 </button>
+                <button type="button" class="btn btn-secondary btn-sm hidden" id="btn-toggle-rename-trip">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" /></svg>
+                    <span>Rename Trip</span>
+                </button>
             </div>
+        </section>
+
+        <!-- Rename Trip Panel (hidden by default) -->
+        <section class="action-card trip-create-panel hidden" id="panel-rename-trip">
+            <h2 class="card-title">
+                <span class="icon-span color-purple">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" /></svg>
+                </span>
+                Rename Trip
+            </h2>
+            <form id="rename-trip-form" class="form-container">
+                <div class="form-group">
+                    <label for="rename-trip-name">Trip Name</label>
+                    <input type="text" id="rename-trip-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="rename-trip-desc">Description (Optional)</label>
+                    <input type="text" id="rename-trip-desc" placeholder="Update description">
+                </div>
+                <div class="form-group-row">
+                    <button type="submit" class="btn btn-purple">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-rename-trip">Cancel</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Trip Custom Fields Panel (hidden unless a trip is selected) -->
+        <section class="action-card trip-create-panel hidden" id="panel-custom-fields">
+            <h2 class="card-title">
+                <span class="icon-span color-orange">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                </span>
+                Custom Fields for <span id="custom-fields-trip-name">Trip</span>
+            </h2>
+            <p class="panel-hint">Define extra expense categories for this trip (e.g. Parking, Shopping, Tips).</p>
+            <form id="custom-field-form" class="form-container">
+                <div class="form-group-row">
+                    <div class="form-group">
+                        <label for="custom-field-name">Field Name</label>
+                        <input type="text" id="custom-field-name" placeholder="e.g. Parking" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="custom-field-type">Input Type</label>
+                        <div class="select-wrapper">
+                            <select id="custom-field-type" required>
+                                <option value="AMOUNT">Amount (₹)</option>
+                                <option value="TEXT">Text</option>
+                                <option value="NUMBER">Number</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-orange btn-sm">Add Field</button>
+            </form>
+            <div id="custom-fields-list" class="custom-fields-list"></div>
         </section>
 
         <!-- Create Trip Panel (hidden by default) -->
@@ -335,6 +394,45 @@
                         </button>
                     </form>
                 </section>
+
+                <!-- Custom Expense Entry Card -->
+                <section class="action-card hidden" id="card-custom-expense-form">
+                    <h2 class="card-title">
+                        <span class="icon-span color-orange">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                        </span>
+                        Log Custom Expense
+                    </h2>
+                    <form id="custom-expense-form" class="form-container">
+                        <div class="form-group">
+                            <label for="custom-expense-field">Custom Field</label>
+                            <div class="select-wrapper">
+                                <select id="custom-expense-field" required>
+                                    <option value="">Select a field...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group hidden" id="custom-expense-amount-group">
+                            <label for="custom-expense-amount">Amount (₹)</label>
+                            <input type="number" id="custom-expense-amount" step="0.01" min="0.01">
+                        </div>
+                        <div class="form-group hidden" id="custom-expense-text-group">
+                            <label for="custom-expense-text">Value</label>
+                            <input type="text" id="custom-expense-text">
+                        </div>
+                        <div class="form-group hidden" id="custom-expense-number-group">
+                            <label for="custom-expense-number">Value</label>
+                            <input type="number" id="custom-expense-number" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="custom-expense-note">Note (Optional)</label>
+                            <input type="text" id="custom-expense-note" placeholder="Additional details">
+                        </div>
+                        <button type="submit" class="btn btn-orange" id="btn-submit-custom-expense">
+                            <span>Save Custom Entry</span>
+                        </button>
+                    </form>
+                </section>
             </div>
 
             <!-- RIGHT COLUMN: Logs/Feeds -->
@@ -393,6 +491,19 @@
                         <div class="empty-state">
                             <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" class="empty-icon"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                             <p>No food expenses logged yet.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Custom Expense Logs -->
+                <section class="logs-card hidden" id="card-custom-expense-logs">
+                    <div class="logs-header">
+                        <h2 class="card-title">Custom Expense History</h2>
+                        <span class="badge badge-orange" id="badge-custom-count">0 entries</span>
+                    </div>
+                    <div class="logs-list-wrapper" id="custom-logs-list">
+                        <div class="empty-state">
+                            <p>No custom entries logged yet.</p>
                         </div>
                     </div>
                 </section>

@@ -1,5 +1,6 @@
 package com.expensetracker.entity;
 
+import com.expensetracker.util.DateTimeUtil;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -24,14 +25,14 @@ public class Trip {
     
     // Constructors
     public Trip() {
-        this.startDate = LocalDateTime.now();
+        this.startDate = DateTimeUtil.now();
         this.active = true;
     }
     
     public Trip(String name, String description) {
         this.name = name;
         this.description = description;
-        this.startDate = LocalDateTime.now();
+        this.startDate = DateTimeUtil.now();
         this.active = true;
     }
     

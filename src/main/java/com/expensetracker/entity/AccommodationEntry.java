@@ -1,5 +1,6 @@
 package com.expensetracker.entity;
 
+import com.expensetracker.util.DateTimeUtil;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -25,14 +26,14 @@ public class AccommodationEntry {
     private Trip trip;
 
     public AccommodationEntry() {
-        this.entryTime = LocalDateTime.now();
+        this.entryTime = DateTimeUtil.now();
     }
 
     public AccommodationEntry(Double amount, String name, Trip trip) {
         this.amount = amount;
         this.name = name;
         this.trip = trip;
-        this.entryTime = LocalDateTime.now();
+        this.entryTime = DateTimeUtil.now();
     }
 
     public Long getId() {

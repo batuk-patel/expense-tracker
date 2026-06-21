@@ -10,6 +10,8 @@ import com.expensetracker.repository.TollEntryRepository;
 import com.expensetracker.repository.FuelEntryRepository;
 import com.expensetracker.repository.AccommodationEntryRepository;
 import com.expensetracker.repository.FoodEntryRepository;
+import com.expensetracker.repository.TripCustomFieldRepository;
+import com.expensetracker.repository.CustomExpenseEntryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +37,12 @@ public class TripService {
     @Autowired
     private FoodEntryRepository foodEntryRepository;
 
+    @Autowired
+    private TripCustomFieldRepository tripCustomFieldRepository;
+
+    @Autowired
+    private CustomExpenseEntryRepository customExpenseEntryRepository;
+
     public Trip saveTrip(Trip trip) {
         return tripRepository.save(trip);
     }
@@ -49,6 +57,18 @@ public class TripService {
 
     public Optional<Trip> getTripById(Long id) {
         return tripRepository.findById(id);
+    }
+
+    public Optional<Trip> updateTrip(Long id, String name, String description) {
+        return tripRepository.findById(id).map(trip -> {
+            if (name != null && !name.isBlank()) {
+                trip.setName(name.trim());
+            }
+            if (description != null) {
+                trip.setDescription(description.isBlank() ? null : description.trim());
+            }
+            return tripRepository.save(trip);
+        });
     }
 
     // Safely delete a trip by first dissociating all linked expenses
@@ -78,6 +98,8 @@ public class TripService {
             foodEntryRepository.save(food);
         }
 
+        tripCustomFieldRepository.deleteByTripId(id);
+        customExpenseEntryRepository.deleteByTripId(id);
         tripRepository.deleteById(id);
     }
 }

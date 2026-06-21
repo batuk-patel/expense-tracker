@@ -5,6 +5,8 @@ import com.expensetracker.repository.FuelEntryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.expensetracker.util.DateTimeUtil;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -17,7 +19,7 @@ public class FuelEntryService {
     
     public FuelEntry saveFuelEntry(FuelEntry fuelEntry) {
         if (fuelEntry.getEntryTime() == null) {
-            fuelEntry.setEntryTime(LocalDateTime.now());
+            fuelEntry.setEntryTime(DateTimeUtil.now());
         }
         return fuelEntryRepository.save(fuelEntry);
     }

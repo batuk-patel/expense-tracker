@@ -1,5 +1,6 @@
 package com.expensetracker.entity;
 
+import com.expensetracker.util.DateTimeUtil;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -32,7 +33,7 @@ public class FuelEntry {
     
     // Constructors
     public FuelEntry() {
-        this.entryTime = LocalDateTime.now();
+        this.entryTime = DateTimeUtil.now();
     }
     
     public FuelEntry(Double amount, String location, Double liters, String note, Trip trip) {
@@ -41,7 +42,7 @@ public class FuelEntry {
         this.liters = liters;
         this.note = note;
         this.trip = trip;
-        this.entryTime = LocalDateTime.now();
+        this.entryTime = DateTimeUtil.now();
     }
     
     // Getters and Setters

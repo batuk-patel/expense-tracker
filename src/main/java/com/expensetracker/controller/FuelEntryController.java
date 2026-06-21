@@ -3,6 +3,8 @@ package com.expensetracker.controller;
 import com.expensetracker.entity.FuelEntry;
 import com.expensetracker.service.FuelEntryService;
 import com.expensetracker.service.TripService;
+import com.expensetracker.util.DateTimeUtil;
+import com.expensetracker.util.RequestUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,14 +32,11 @@ public class FuelEntryController {
             entry.setLiters(((Number) body.get("liters")).doubleValue());
             Object note = body.get("note");
             entry.setNote(note != null && !note.toString().isBlank() ? note.toString() : null);
+            entry.setEntryTime(DateTimeUtil.parse(body.get("entryTime")));
 
-            Object tripObj = body.get("trip");
-            if (tripObj instanceof Map) {
-                Object tripId = ((Map<?, ?>) tripObj).get("id");
-                if (tripId != null) {
-                    Long id = ((Number) tripId).longValue();
-                    tripService.getTripById(id).ifPresent(entry::setTrip);
-                }
+            Long tripId = RequestUtil.extractTripId(body);
+            if (tripId != null) {
+                tripService.getTripById(tripId).ifPresent(entry::setTrip);
             }
 
             FuelEntry saved = fuelEntryService.saveFuelEntry(entry);
