@@ -41,11 +41,21 @@
         <!-- Trip Selector Toolbar -->
         <section class="trip-toolbar-card" aria-label="Trip Filter and Selection">
             <div class="trip-toolbar-left">
-                <span class="toolbar-label">Active Trip Filter:</span>
+                <span class="toolbar-label">Trip:</span>
                 <div class="select-wrapper">
                     <select id="trip-filter-select" aria-label="Filter expenses by trip">
                         <option value="all">All Expenses</option>
                         <option value="none">General (No Trip)</option>
+                    </select>
+                </div>
+                <span class="toolbar-label">Activity:</span>
+                <div class="select-wrapper">
+                    <select id="activity-filter-select" aria-label="Filter expenses by activity">
+                        <option value="all">All Activities</option>
+                        <option value="toll">Toll</option>
+                        <option value="fuel">Fuel</option>
+                        <option value="accommodation">Stay</option>
+                        <option value="food">Food</option>
                     </select>
                 </div>
             </div>
@@ -347,6 +357,10 @@
                             </div>
                         </div>
                         <div class="form-group">
+                            <label for="accommodation-note">Note (Optional)</label>
+                            <input type="text" id="accommodation-note" placeholder="e.g. Deluxe Room, booking reference">
+                        </div>
+                        <div class="form-group">
                             <label for="accommodation-trip">Link to Trip</label>
                             <div class="select-wrapper">
                                 <select id="accommodation-trip">
@@ -379,6 +393,10 @@
                                 <label for="food-name">Restaurant / Dish (Optional)</label>
                                 <input type="text" id="food-name" placeholder="e.g. Café 17, Pizza">
                             </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="food-note">Note (Optional)</label>
+                            <input type="text" id="food-note" placeholder="e.g. Dinner at highway dhaba">
                         </div>
                         <div class="form-group">
                             <label for="food-trip">Link to Trip</label>
@@ -509,6 +527,81 @@
                 </section>
             </div>
         </main>
+    </div>
+
+    <!-- Edit Entry Modal -->
+    <div id="edit-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Edit Entry">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 class="modal-title" id="edit-modal-title">Edit Entry</h2>
+                <button type="button" class="btn-icon-close" id="edit-modal-close" aria-label="Close modal">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <form id="edit-modal-form" class="form-container">
+                <input type="hidden" id="edit-entry-id">
+                <input type="hidden" id="edit-entry-type">
+
+                <!-- Amount (all types) -->
+                <div class="form-group" id="edit-group-amount">
+                    <label for="edit-amount">Amount (₹)</label>
+                    <input type="number" id="edit-amount" step="0.01" min="0.01" required>
+                </div>
+
+                <!-- Location (Toll & Fuel) -->
+                <div class="form-group hidden" id="edit-group-location">
+                    <label for="edit-location">Location</label>
+                    <input type="text" id="edit-location">
+                </div>
+
+                <!-- Toll Type (Toll only) -->
+                <div class="form-group hidden" id="edit-group-toll-type">
+                    <label>Type of Toll</label>
+                    <div class="segmented-control">
+                        <input type="radio" name="edit-toll-type" id="edit-toll-type-national" value="National" checked>
+                        <label for="edit-toll-type-national">National</label>
+                        <input type="radio" name="edit-toll-type" id="edit-toll-type-state" value="State">
+                        <label for="edit-toll-type-state">State</label>
+                    </div>
+                </div>
+
+                <!-- Liters (Fuel only) -->
+                <div class="form-group hidden" id="edit-group-liters">
+                    <label for="edit-liters">Fuel Volume (Liters)</label>
+                    <input type="number" id="edit-liters" step="0.001" min="0.01">
+                </div>
+
+                <!-- Name / Place (Accommodation & Food) -->
+                <div class="form-group hidden" id="edit-group-name">
+                    <label for="edit-name" id="edit-name-label">Name</label>
+                    <input type="text" id="edit-name">
+                </div>
+
+                <!-- Note (all types) -->
+                <div class="form-group" id="edit-group-note">
+                    <label for="edit-note">Note (Optional)</label>
+                    <input type="text" id="edit-note" placeholder="Add or update note">
+                </div>
+
+                <!-- Trip Link -->
+                <div class="form-group">
+                    <label for="edit-trip">Link to Trip</label>
+                    <div class="select-wrapper">
+                        <select id="edit-trip">
+                            <option value="none">General / No Trip</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-purple" id="btn-save-edit">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span>Save Changes</span>
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-edit">Cancel</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Notification Toast -->

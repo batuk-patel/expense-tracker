@@ -71,4 +71,34 @@ public class TollEntryController {
         }
         return ResponseEntity.notFound().build();
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateTollEntry(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        try {
+            if (tollEntryService.getTollEntryById(id).isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            TollEntry entry = new TollEntry();
+            entry.setAmount(((Number) body.get("amount")).doubleValue());
+            entry.setLocation((String) body.get("location"));
+            entry.setTollType(body.getOrDefault("tollType", "National").toString());
+            Object note = body.get("note");
+            entry.setNote(note != null && !note.toString().isBlank() ? note.toString() : null);
+
+            Long tripId = RequestUtil.extractTripId(body);
+            if (tripId != null) {
+                tripService.getTripById(tripId).ifPresent(entry::setTrip);
+            } else {
+                entry.setTrip(null);
+            }
+
+            TollEntry updated = tollEntryService.updateTollEntry(id, entry);
+            if (updated != null) {
+                return ResponseEntity.ok(updated);
+            }
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error updating toll entry: " + e.getMessage());
+        }
+    }
 }

@@ -30,6 +30,8 @@ public class AccommodationEntryController {
             entry.setAmount(((Number) body.get("amount")).doubleValue());
             Object name = body.get("name");
             entry.setName(name != null && !name.toString().isBlank() ? name.toString() : null);
+            Object note = body.get("note");
+            entry.setNote(note != null && !note.toString().isBlank() ? note.toString() : null);
             entry.setEntryTime(DateTimeUtil.parse(body.get("entryTime")));
 
             Long tripId = RequestUtil.extractTripId(body);
@@ -68,5 +70,35 @@ public class AccommodationEntryController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateAccommodationEntry(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        try {
+            if (accommodationEntryService.getAccommodationEntryById(id).isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            AccommodationEntry entry = new AccommodationEntry();
+            entry.setAmount(((Number) body.get("amount")).doubleValue());
+            Object name = body.get("name");
+            entry.setName(name != null && !name.toString().isBlank() ? name.toString() : null);
+            Object note = body.get("note");
+            entry.setNote(note != null && !note.toString().isBlank() ? note.toString() : null);
+
+            Long tripId = RequestUtil.extractTripId(body);
+            if (tripId != null) {
+                tripService.getTripById(tripId).ifPresent(entry::setTrip);
+            } else {
+                entry.setTrip(null);
+            }
+
+            AccommodationEntry updated = accommodationEntryService.updateAccommodationEntry(id, entry);
+            if (updated != null) {
+                return ResponseEntity.ok(updated);
+            }
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error updating accommodation entry: " + e.getMessage());
+        }
     }
 }

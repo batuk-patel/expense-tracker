@@ -42,6 +42,7 @@ public class FoodEntryService {
         return foodEntryRepository.findById(id).map(entry -> {
             entry.setAmount(updatedEntry.getAmount());
             entry.setName(updatedEntry.getName());
+            entry.setNote(updatedEntry.getNote());
             entry.setTrip(updatedEntry.getTrip());
             return foodEntryRepository.save(entry);
         }).orElse(null);

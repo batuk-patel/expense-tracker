@@ -21,6 +21,9 @@ public class FoodEntry {
     @Column(nullable = false)
     private LocalDateTime entryTime;
 
+    @Column(nullable = true)
+    private String note;
+
     @ManyToOne
     @JoinColumn(name = "trip_id", nullable = true)
     private Trip trip;
@@ -32,6 +35,14 @@ public class FoodEntry {
     public FoodEntry(Double amount, String name, Trip trip) {
         this.amount = amount;
         this.name = name;
+        this.trip = trip;
+        this.entryTime = DateTimeUtil.now();
+    }
+
+    public FoodEntry(Double amount, String name, String note, Trip trip) {
+        this.amount = amount;
+        this.name = name;
+        this.note = note;
         this.trip = trip;
         this.entryTime = DateTimeUtil.now();
     }
@@ -74,5 +85,13 @@ public class FoodEntry {
 
     public void setTrip(Trip trip) {
         this.trip = trip;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
     }
 }

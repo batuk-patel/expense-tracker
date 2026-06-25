@@ -16,6 +16,7 @@ let customExpenseEntries = [];
 let trips = [];
 let tripCustomFields = [];
 let currentTripFilter = 'all';
+let currentActivityFilter = 'all';
 
 const APP_TIMEZONE = 'Asia/Kolkata';
 
@@ -54,6 +55,7 @@ const toastEl = document.getElementById('toast');
 
 // New Trip DOM Elements
 const tripFilterSelect = document.getElementById('trip-filter-select');
+const activityFilterSelect = document.getElementById('activity-filter-select');
 const tollTripSelect = document.getElementById('toll-trip');
 const fuelTripSelect = document.getElementById('fuel-trip');
 const accommodationTripSelect = document.getElementById('accommodation-trip');
@@ -92,9 +94,10 @@ document.addEventListener('DOMContentLoaded', () => {
     applyTheme(currentTheme);
 
     const savedFilter = localStorage.getItem('currentTripFilter');
-    if (savedFilter) {
-        currentTripFilter = savedFilter;
-    }
+    if (savedFilter) currentTripFilter = savedFilter;
+
+    const savedActivity = localStorage.getItem('currentActivityFilter');
+    if (savedActivity) currentActivityFilter = savedActivity;
 
     startClock();
     fetchData();
@@ -279,34 +282,25 @@ function updateTripDropdowns() {
     accommodationTripSelect.innerHTML = `<option value="none">General / No Trip</option>`;
     foodTripSelect.innerHTML = `<option value="none">General / No Trip</option>`;
 
+    const editTripSelect = document.getElementById('edit-trip');
+    if (editTripSelect) editTripSelect.innerHTML = `<option value="none">General / No Trip</option>`;
+
     // Sort trips by date descending
     trips.sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
 
     trips.forEach(trip => {
-        const optFilter = document.createElement('option');
-        optFilter.value = trip.id;
-        optFilter.textContent = trip.name;
-        tripFilterSelect.appendChild(optFilter);
-
-        const optToll = document.createElement('option');
-        optToll.value = trip.id;
-        optToll.textContent = trip.name;
-        tollTripSelect.appendChild(optToll);
-
-        const optFuel = document.createElement('option');
-        optFuel.value = trip.id;
-        optFuel.textContent = trip.name;
-        fuelTripSelect.appendChild(optFuel);
-
-        const optAccommodation = document.createElement('option');
-        optAccommodation.value = trip.id;
-        optAccommodation.textContent = trip.name;
-        accommodationTripSelect.appendChild(optAccommodation);
-
-        const optFood = document.createElement('option');
-        optFood.value = trip.id;
-        optFood.textContent = trip.name;
-        foodTripSelect.appendChild(optFood);
+        const makeOpt = () => {
+            const o = document.createElement('option');
+            o.value = trip.id;
+            o.textContent = trip.name;
+            return o;
+        };
+        tripFilterSelect.appendChild(makeOpt());
+        tollTripSelect.appendChild(makeOpt());
+        fuelTripSelect.appendChild(makeOpt());
+        accommodationTripSelect.appendChild(makeOpt());
+        foodTripSelect.appendChild(makeOpt());
+        if (editTripSelect) editTripSelect.appendChild(makeOpt());
     });
 
     // Validate and restore active filter choice
@@ -316,7 +310,8 @@ function updateTripDropdowns() {
         localStorage.setItem('currentTripFilter', 'all');
     }
     tripFilterSelect.value = currentTripFilter;
-    
+    if (activityFilterSelect) activityFilterSelect.value = currentActivityFilter;
+
     // Set link options to match filter defaults
     if (currentTripFilter !== 'all' && currentTripFilter !== 'none') {
         tollTripSelect.value = currentTripFilter;
@@ -331,7 +326,7 @@ function updateTripDropdowns() {
     }
 }
 
-// Update UI (Stats & Logs List based on trip filter)
+// Update UI (Stats & Logs List based on trip + activity filter)
 function updateUI() {
     let filteredTolls = [...tollEntries];
     let filteredFuels = [...fuelEntries];
@@ -353,6 +348,31 @@ function updateUI() {
         filteredFood = foodEntries.filter(item => item.trip && item.trip.id === tripId);
         filteredCustom = customExpenseEntries.filter(item => item.trip && item.trip.id === tripId);
     }
+
+    // Activity filter: show/hide sections
+    const act = currentActivityFilter;
+    const showToll  = act === 'all' || act === 'toll';
+    const showFuel  = act === 'all' || act === 'fuel';
+    const showStay  = act === 'all' || act === 'accommodation';
+    const showFood  = act === 'all' || act === 'food';
+
+    const cardTollForm = document.getElementById('card-toll-form');
+    const cardFuelForm = document.getElementById('card-fuel-form');
+    const cardAccForm  = document.getElementById('card-accommodation-form');
+    const cardFoodForm = document.getElementById('card-food-form');
+    const cardTollLogs = document.getElementById('card-toll-logs');
+    const cardFuelLogs = document.getElementById('card-fuel-logs');
+    const cardAccLogs  = document.getElementById('card-accommodation-logs');
+    const cardFoodLogs = document.getElementById('card-food-logs');
+
+    cardTollForm?.classList.toggle('hidden', !showToll);
+    cardFuelForm?.classList.toggle('hidden', !showFuel);
+    cardAccForm?.classList.toggle('hidden', !showStay);
+    cardFoodForm?.classList.toggle('hidden', !showFood);
+    cardTollLogs?.classList.toggle('hidden', !showToll);
+    cardFuelLogs?.classList.toggle('hidden', !showFuel);
+    cardAccLogs?.classList.toggle('hidden', !showStay);
+    cardFoodLogs?.classList.toggle('hidden', !showFood);
 
     filteredTolls.sort((a, b) => new Date(b.entryTime) - new Date(a.entryTime));
     filteredFuels.sort((a, b) => new Date(b.entryTime) - new Date(a.entryTime));
@@ -431,6 +451,9 @@ function renderTollLogs(entries) {
             </div>
             <div class="log-action-side">
                 <span class="log-amount">₹${entry.amount.toFixed(2)}</span>
+                <button class="btn-edit" aria-label="Edit entry" onclick="openEditModal('toll', ${entry.id})">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" /></svg>
+                </button>
                 <button class="btn-delete" aria-label="Delete entry" onclick="deleteToll(${entry.id})">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
                 </button>
@@ -463,6 +486,9 @@ function renderFuelLogs(entries) {
             </div>
             <div class="log-action-side">
                 <span class="log-amount">₹${entry.amount.toFixed(2)}</span>
+                <button class="btn-edit" aria-label="Edit entry" onclick="openEditModal('fuel', ${entry.id})">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" /></svg>
+                </button>
                 <button class="btn-delete" aria-label="Delete entry" onclick="deleteFuel(${entry.id})">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
                 </button>
@@ -488,10 +514,14 @@ function renderAccommodationLogs(entries) {
                     <span class="log-location">${escapeHTML(entry.name || 'Accommodation')}</span>
                     ${entry.trip ? `<span class="badge-trip-link">${escapeHTML(entry.trip.name)}</span>` : ''}
                 </div>
+                ${entry.note ? `<div class="log-note">${escapeHTML(entry.note)}</div>` : ''}
                 <span class="log-time">${formatDateTime(entry.entryTime)}</span>
             </div>
             <div class="log-action-side">
                 <span class="log-amount">₹${entry.amount.toFixed(2)}</span>
+                <button class="btn-edit" aria-label="Edit entry" onclick="openEditModal('accommodation', ${entry.id})">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" /></svg>
+                </button>
                 <button class="btn-delete" aria-label="Delete entry" onclick="deleteAccommodation(${entry.id})">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
                 </button>
@@ -517,10 +547,14 @@ function renderFoodLogs(entries) {
                     <span class="log-location">${escapeHTML(entry.name || 'Food')}</span>
                     ${entry.trip ? `<span class="badge-trip-link">${escapeHTML(entry.trip.name)}</span>` : ''}
                 </div>
+                ${entry.note ? `<div class="log-note">${escapeHTML(entry.note)}</div>` : ''}
                 <span class="log-time">${formatDateTime(entry.entryTime)}</span>
             </div>
             <div class="log-action-side">
                 <span class="log-amount">₹${entry.amount.toFixed(2)}</span>
+                <button class="btn-edit" aria-label="Edit entry" onclick="openEditModal('food', ${entry.id})">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" /></svg>
+                </button>
                 <button class="btn-delete" aria-label="Delete entry" onclick="deleteFood(${entry.id})">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
                 </button>
@@ -579,7 +613,7 @@ function setupEventListeners() {
     tripFilterSelect.addEventListener('change', async (e) => {
         currentTripFilter = e.target.value;
         localStorage.setItem('currentTripFilter', currentTripFilter);
-        
+
         if (currentTripFilter !== 'all' && currentTripFilter !== 'none') {
             tollTripSelect.value = currentTripFilter;
             fuelTripSelect.value = currentTripFilter;
@@ -594,6 +628,15 @@ function setupEventListeners() {
         await updateTripSpecificPanels();
         updateUI();
     });
+
+    // Activity Filter Dropdown Change
+    if (activityFilterSelect) {
+        activityFilterSelect.addEventListener('change', (e) => {
+            currentActivityFilter = e.target.value;
+            localStorage.setItem('currentActivityFilter', currentActivityFilter);
+            updateUI();
+        });
+    }
 
     // Toggle Trip Form Panel
     toggleTripFormBtn.addEventListener('click', () => {
@@ -887,6 +930,7 @@ function setupEventListeners() {
         const payload = {
             amount: parseFloat(amountInput.value),
             name: nameInput.value.trim() || null,
+            note: document.getElementById('accommodation-note').value.trim() || null,
             entryTime: currentEntryTime(),
             trip: tripVal === 'none' ? null : { id: parseInt(tripVal) }
         };
@@ -926,6 +970,7 @@ function setupEventListeners() {
         const payload = {
             amount: parseFloat(amountInput.value),
             name: nameInput.value.trim() || null,
+            note: document.getElementById('food-note').value.trim() || null,
             entryTime: currentEntryTime(),
             trip: tripVal === 'none' ? null : { id: parseInt(tripVal) }
         };
@@ -976,6 +1021,150 @@ function restoreFormTripSelects() {
         foodTripSelect.value = 'none';
     }
 }
+
+// ─── Edit Modal ───────────────────────────────────────────────────────────────
+
+const editModal     = document.getElementById('edit-modal');
+const editModalForm = document.getElementById('edit-modal-form');
+
+function openEditModal(type, id) {
+    let entry;
+    if (type === 'toll')          entry = tollEntries.find(e => e.id === id);
+    else if (type === 'fuel')     entry = fuelEntries.find(e => e.id === id);
+    else if (type === 'accommodation') entry = accommodationEntries.find(e => e.id === id);
+    else if (type === 'food')     entry = foodEntries.find(e => e.id === id);
+    if (!entry) return;
+
+    // Populate hidden fields
+    document.getElementById('edit-entry-id').value   = id;
+    document.getElementById('edit-entry-type').value = type;
+
+    // Reset all optional groups
+    document.getElementById('edit-group-location').classList.add('hidden');
+    document.getElementById('edit-group-toll-type').classList.add('hidden');
+    document.getElementById('edit-group-liters').classList.add('hidden');
+    document.getElementById('edit-group-name').classList.add('hidden');
+    document.getElementById('edit-location').required = false;
+    document.getElementById('edit-liters').required   = false;
+
+    // Common: amount + note + trip
+    document.getElementById('edit-amount').value = entry.amount;
+    document.getElementById('edit-note').value   = entry.note || '';
+
+    // Populate trip select then set value
+    const editTripSelect = document.getElementById('edit-trip');
+    editTripSelect.value = entry.trip ? entry.trip.id : 'none';
+
+    // Set modal title & type-specific fields
+    if (type === 'toll') {
+        document.getElementById('edit-modal-title').textContent = 'Edit Toll Entry';
+        document.getElementById('edit-group-location').classList.remove('hidden');
+        document.getElementById('edit-group-toll-type').classList.remove('hidden');
+        document.getElementById('edit-location').value   = entry.location;
+        document.getElementById('edit-location').required = true;
+        const tollTypeVal = entry.tollType || 'National';
+        document.querySelector(`input[name="edit-toll-type"][value="${tollTypeVal}"]`).checked = true;
+    } else if (type === 'fuel') {
+        document.getElementById('edit-modal-title').textContent = 'Edit Fuel Entry';
+        document.getElementById('edit-group-location').classList.remove('hidden');
+        document.getElementById('edit-group-liters').classList.remove('hidden');
+        document.getElementById('edit-location').value   = entry.location;
+        document.getElementById('edit-location').required = true;
+        document.getElementById('edit-liters').value     = entry.liters;
+        document.getElementById('edit-liters').required  = true;
+    } else if (type === 'accommodation') {
+        document.getElementById('edit-modal-title').textContent = 'Edit Accommodation';
+        document.getElementById('edit-group-name').classList.remove('hidden');
+        document.getElementById('edit-name-label').textContent = 'Hotel / Place (Optional)';
+        document.getElementById('edit-name').value = entry.name || '';
+    } else if (type === 'food') {
+        document.getElementById('edit-modal-title').textContent = 'Edit Food Entry';
+        document.getElementById('edit-group-name').classList.remove('hidden');
+        document.getElementById('edit-name-label').textContent = 'Restaurant / Dish (Optional)';
+        document.getElementById('edit-name').value = entry.name || '';
+    }
+
+    editModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeEditModal() {
+    editModal.classList.add('hidden');
+    document.body.style.overflow = '';
+    editModalForm.reset();
+}
+
+// Wire modal close buttons
+document.getElementById('edit-modal-close')?.addEventListener('click', closeEditModal);
+document.getElementById('btn-cancel-edit')?.addEventListener('click', closeEditModal);
+editModal?.addEventListener('click', (e) => { if (e.target === editModal) closeEditModal(); });
+
+// Wire edit form submit — we never send entryTime so the backend preserves it
+editModalForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id   = parseInt(document.getElementById('edit-entry-id').value);
+    const type = document.getElementById('edit-entry-type').value;
+
+    const editTripSelect = document.getElementById('edit-trip');
+    const tripVal = editTripSelect ? editTripSelect.value : 'none';
+
+    const payload = {
+        amount: parseFloat(document.getElementById('edit-amount').value),
+        note:   document.getElementById('edit-note').value.trim() || null,
+        trip:   tripVal === 'none' ? null : { id: parseInt(tripVal) }
+    };
+
+    if (type === 'toll') {
+        payload.location = document.getElementById('edit-location').value.trim();
+        payload.tollType = document.querySelector('input[name="edit-toll-type"]:checked')?.value || 'National';
+    } else if (type === 'fuel') {
+        payload.location = document.getElementById('edit-location').value.trim();
+        payload.liters   = parseFloat(document.getElementById('edit-liters').value);
+    } else if (type === 'accommodation' || type === 'food') {
+        payload.name = document.getElementById('edit-name').value.trim() || null;
+    }
+
+    const apiMap = {
+        toll: TOLL_API, fuel: FUEL_API,
+        accommodation: ACCOMMODATION_API, food: FOOD_API
+    };
+    const api = apiMap[type];
+
+    try {
+        const res = await fetch(`${api}/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            const updated = await res.json();
+            if (type === 'toll') {
+                const idx = tollEntries.findIndex(e => e.id === id);
+                if (idx !== -1) tollEntries[idx] = updated;
+            } else if (type === 'fuel') {
+                const idx = fuelEntries.findIndex(e => e.id === id);
+                if (idx !== -1) fuelEntries[idx] = updated;
+            } else if (type === 'accommodation') {
+                const idx = accommodationEntries.findIndex(e => e.id === id);
+                if (idx !== -1) accommodationEntries[idx] = updated;
+            } else if (type === 'food') {
+                const idx = foodEntries.findIndex(e => e.id === id);
+                if (idx !== -1) foodEntries[idx] = updated;
+            }
+            closeEditModal();
+            updateUI();
+            showToast('Entry updated!');
+        } else {
+            const errText = await res.text();
+            console.error('Edit failed:', errText);
+            showToast('Failed to update entry.', true);
+        }
+    } catch (err) {
+        console.error('Error updating entry:', err);
+        showToast('Failed to update entry.', true);
+    }
+});
 
 // Delete Toll Entry Action
 async function deleteToll(id) {

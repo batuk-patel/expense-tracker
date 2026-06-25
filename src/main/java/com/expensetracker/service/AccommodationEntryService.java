@@ -42,6 +42,7 @@ public class AccommodationEntryService {
         return accommodationEntryRepository.findById(id).map(entry -> {
             entry.setAmount(updatedEntry.getAmount());
             entry.setName(updatedEntry.getName());
+            entry.setNote(updatedEntry.getNote());
             entry.setTrip(updatedEntry.getTrip());
             return accommodationEntryRepository.save(entry);
         }).orElse(null);

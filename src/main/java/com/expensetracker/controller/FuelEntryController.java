@@ -71,4 +71,34 @@ public class FuelEntryController {
         }
         return ResponseEntity.notFound().build();
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateFuelEntry(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        try {
+            if (fuelEntryService.getFuelEntryById(id).isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            FuelEntry entry = new FuelEntry();
+            entry.setAmount(((Number) body.get("amount")).doubleValue());
+            entry.setLocation((String) body.get("location"));
+            entry.setLiters(((Number) body.get("liters")).doubleValue());
+            Object note = body.get("note");
+            entry.setNote(note != null && !note.toString().isBlank() ? note.toString() : null);
+
+            Long tripId = RequestUtil.extractTripId(body);
+            if (tripId != null) {
+                tripService.getTripById(tripId).ifPresent(entry::setTrip);
+            } else {
+                entry.setTrip(null);
+            }
+
+            FuelEntry updated = fuelEntryService.updateFuelEntry(id, entry);
+            if (updated != null) {
+                return ResponseEntity.ok(updated);
+            }
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error updating fuel entry: " + e.getMessage());
+        }
+    }
 }
